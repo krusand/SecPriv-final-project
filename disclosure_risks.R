@@ -50,6 +50,22 @@ get_l_diversity <- function(df, quasi_idfs, sensitive_col) {
     return(l_div)
 }
 
+# function to compute reidentification-risks and return average risk
+get_reid_risk <- function(df, pop_df, quasi_idfs) {
+    population_freqs <- pop_df %>%
+        group_by(across(all_of(quasi_idfs))) %>%
+        mutate(F_k = n()) %>%
+        ungroup()
+        select(everything(), f_k)
+    
+   table1 <- df %>%
+        left_join(population_freqs, by = quasi_idfs)
+        mutate(F_k = 1/F_k)
+    print(table1)
+    avg_reid_risk <- mean(table1$F_k)
+    return(avg_reid_risk)
+}
+
 quasi_idfs <- c("residence", "gender", "education", "labor")
 sensitive_col <- health
 test_k_anm <- get_sample_freqs(test_df, quasi_idfs)
