@@ -1,5 +1,5 @@
-library(tidyverse)
 library(readxl)
+library(tidyverse)
 library(dplyr)
 
 # df <- read_xlsx(path = "data/raw/private_dataU.xlsx")
@@ -30,13 +30,29 @@ get_k_anonymity <- function(df, quasi_idfs) {
     table1 <- df %>% 
         group_by(across(all_of(quasi_idfs))) %>%
         mutate(f_k = n()) %>%
-        ungroup() %>% 
+        ungroup()
         select(everything(), f_k)
     print(table1)
     k_anm <- min(table1$f_k)
     return(k_anm)
 }
 
+# function to compute l-diversity for each sample and return the minimum value
+get_l_diversity <- function(df, quasi_idfs, sensitive_col) {
+    table1 <- df %>% 
+        group_by(across(all_of(quasi_idfs)), {{ sensitive_col }}) %>%
+        group_by(across(all_of(quasi_idfs))) %>%
+        mutate(l_diversity = n_distinct({{ sensitive_col }})) %>%
+        ungroup() %>%
+        select(everything(), l_diversity)
+    print(table1)
+    l_div <- min(table1$l_diversity)
+    return(l_div)
+}
+
 quasi_idfs <- c("residence", "gender", "education", "labor")
+sensitive_col <- health
 test_k_anm <- get_sample_freqs(test_df, quasi_idfs)
 print(test_k_anm)
+test_l_div <- get_l_diversity(test_df, quasi_idfs, sensitive_col)
+print(test_l_div)
