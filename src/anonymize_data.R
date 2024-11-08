@@ -102,3 +102,51 @@ private_data %>%
   count(m_party) %>% 
   View()
 
+
+
+# SDC micro
+
+private_data_sdc_pram <- private_data %>% 
+  mutate(zip = as.numeric(zip)) %>% 
+  mutate(evote = as.factor(evote)) %>% 
+  mutate(sex=as.factor(sex)) %>% 
+  mutate(education=as.factor(education)) %>% 
+  mutate(citizenship=as.factor(citizenship)) %>% 
+  mutate(marital_status=as.factor(marital_status))
+
+private_data_sdc_ls <- private_data %>% 
+  mutate(zip = as.numeric(zip)) %>% 
+  mutate(evote = as.character(evote)) %>% 
+  mutate(sex=as.character(sex)) %>% 
+  mutate(education=as.character(education)) %>% 
+  mutate(citizenship=as.character(citizenship)) %>% 
+  mutate(marital_status=as.character(marital_status))
+selectedKeyVars = c('sex', 'evote', 'dob', 'zip', 'education', 'citizenship', 'marital_status')
+
+
+# selected pram variables
+selectedPramVars = c('evote', 'sex',  'education', 'citizenship', 'marital_status')
+
+# sensitive variables for l-diversity computation
+selectedSensibleVar = c('party')
+
+sdcInitial <- createSdcObj(dat         = private_data_sdc_ls,
+                           keyVars     = selectedKeyVars,
+                           pramVars    = selectedPramVars,
+                           sensibleVar = selectedSensibleVar)
+
+sdcInitial
+
+
+sdcInitial <- pram(obj = sdcInitial)
+
+print(sdcInitial, type="pram")
+
+
+localSuppression(obj = sdcInitial, k = 2)
+
+
+
+
+
+
