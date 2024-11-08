@@ -2,22 +2,10 @@
 setwd("/Users/krusand/Documents/GitHub/SecPriv-final-project/")
 library(tidyverse)
 library(openxlsx)
-library(rworldmap)
 library(sdcMicro)
 
-data(countryExData)
 
-country_region <- countryExData %>% 
-  select(Country, m_region = GEO_subregion)
-
-# Some countries not available, add these:
-
-missing_countries <- tibble(
-  Country = c("Somalia", "Vietnam", "Yugoslavia"),
-  m_region = c("Eastern Africa", 'South East Asia', 'Central Europe')
-)
-
-country_region <- bind_rows(list(country_region, missing_countries))
+country_region <- read_csv2("src/country_mappings.csv")
 
 # Load data
 
@@ -42,8 +30,8 @@ private_data <- private_data %>%
 # PRAM - Marital status
 
 possible_marital_status <- c("Never married", "Married/separated", "Divorced", "Widowed")
-stay_prob <- 0.7
-leave_prob <- 0.1
+stay_prob <- 0.601
+leave_prob <- 0.133
 
 
 private_data <- private_data %>% 
@@ -59,18 +47,18 @@ private_data <- private_data %>%
 # Global recoding - Citizenship
 
 private_data <- private_data %>% 
-  group_by(citizenship) %>% 
-  left_join(country_region, by=c('citizenship' = 'Country')) %>% 
-  ungroup()
-
+  mutate(m_region = case_when(
+    citizenship == 'Denmark' ~ 'Denmark',
+    T ~ 'Other'
+  ))
 
 
 # PRAM - evote
 
 possible_evote <- c(0, 1)
 
-stay_prob <- 0.9
-leave_prob <- 0.1
+stay_prob <- 0.7
+leave_prob <- 0.3
 
 private_data <- private_data %>% 
   mutate(m_evote = case_when(
@@ -81,8 +69,8 @@ private_data <- private_data %>%
 
 # PRAM - party
 possible_party <- c('Green','Red', 'Invalid vote')
-stay_prob <- 0.9
-leave_prob <- 0.05
+stay_prob <- 0.7
+leave_prob <- 0.15
 
 private_data <- private_data %>% 
   mutate(m_party = case_when(
@@ -96,8 +84,8 @@ private_data <- private_data %>%
 
 possible_sex <- c("Male", "Female")
 
-stay_prob <- 0.9
-leave_prob <- 0.1
+stay_prob <- 0.7
+leave_prob <- 0.3
 
 private_data <- private_data %>% 
   mutate(m_sex = case_when(
@@ -105,57 +93,17 @@ private_data <- private_data %>%
     sex == "Female" ~ sample(possible_sex, size=nrow(.), replace=T, prob=c(leave_prob,stay_prob))
   ))
 
+# Local suppression - zip
+
+private_data <- private_data %>% 
+  mutate(m_zip = case_when(
+    m_region == 'Denmark' ~ zip,
+    T ~ NA
+  ))
+
 
 private_data %>% 
-  select(m_sex, m_evote, m_dob, zip, education, m_citizenship_region = m_region, m_marital_status, m_party) %>% 
+  select(m_sex, m_evote, m_dob, m_zip, education, m_citizenship_region = m_region, m_marital_status, m_party) %>% 
   write.xlsx("./data/anonymized/anonymized_data.xlsx")
-
-
-
-
-# SDC micro
-
-private_data_sdc_pram <- private_data %>% 
-  mutate(zip = as.numeric(zip)) %>% 
-  mutate(evote = as.factor(evote)) %>% 
-  mutate(sex=as.factor(sex)) %>% 
-  mutate(education=as.factor(education)) %>% 
-  mutate(citizenship=as.factor(citizenship)) %>% 
-  mutate(marital_status=as.factor(marital_status))
-
-private_data_sdc_ls <- private_data %>% 
-  mutate(zip = as.numeric(zip)) %>% 
-  mutate(evote = as.character(evote)) %>% 
-  mutate(sex=as.character(sex)) %>% 
-  mutate(education=as.character(education)) %>% 
-  mutate(citizenship=as.character(citizenship)) %>% 
-  mutate(marital_status=as.character(marital_status))
-selectedKeyVars = c('sex', 'evote', 'dob', 'zip', 'education', 'citizenship', 'marital_status')
-
-
-# selected pram variables
-selectedPramVars = c('evote', 'sex',  'education', 'citizenship', 'marital_status')
-
-# sensitive variables for l-diversity computation
-selectedSensibleVar = c('party')
-
-sdcInitial <- createSdcObj(dat         = private_data_sdc_ls,
-                           keyVars     = selectedKeyVars,
-                           pramVars    = selectedPramVars,
-                           sensibleVar = selectedSensibleVar)
-
-sdcInitial
-
-
-sdcInitial <- pram(obj = sdcInitial)
-
-print(sdcInitial, type="pram")
-
-
-localSuppression(obj = sdcInitial, k = 2)
-
-
-
-
 
 
