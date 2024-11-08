@@ -37,7 +37,7 @@ get_reid_risk <- function(df, pop_df, quasi_idfs) {
         group_by(across(all_of(quasi_idfs))) %>%
         mutate(F_k = n()) %>%
         ungroup()
-        select(everything(), f_k)
+        select(everything(), F_k)
     
    table1 <- df %>%
         left_join(population_freqs, by = quasi_idfs)
