@@ -108,7 +108,7 @@ private_data <- private_data %>%
 
 private_data %>% 
   select(m_sex, m_evote, m_dob, zip, education, m_citizenship_region = m_region, m_marital_status, m_party) %>% 
-  write.xlsx("./data/anonymized/anonymized_data")
+  write.xlsx("./data/anonymized/anonymized_data.xlsx")
 
 
 
