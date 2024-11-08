@@ -35,11 +35,9 @@ private_data <- raw_private_data %>%
 # Global recoding + TopBottom Recoding - DOB
 dob_labs = c("<=1940s","1950s","1960s","1970s","1980s","1990s",">=2000s")
 
-private_data %>% 
+private_data <- private_data %>% 
   mutate(year=year(dob)) %>% 
-  mutate(m_dob = 
-           cut(year, breaks = c(0, 1949, 1959, 1969, 1979, 1989, 1999, Inf), labels=dob_labs)) %>% 
-  View()
+  mutate(m_dob = cut(year, breaks = c(0, 1949, 1959, 1969, 1979, 1989, 1999, Inf), labels=dob_labs))
 
 # PRAM - Marital status
 
@@ -48,44 +46,37 @@ stay_prob <- 0.7
 leave_prob <- 0.1
 
 
-private_data %>% 
+private_data <- private_data %>% 
   mutate(m_marital_status = case_when(
     marital_status == 'Never married' ~ sample(possible_marital_status, size=nrow(.), replace = T, prob = c(stay_prob,leave_prob,leave_prob,leave_prob)),
     marital_status == 'Married/separated' ~ sample(possible_marital_status, size=nrow(.),replace = T, prob = c(leave_prob,stay_prob,leave_prob,leave_prob)),
     marital_status == 'Divorced' ~ sample(possible_marital_status, size=nrow(.),replace = T, prob = c(leave_prob,leave_prob,stay_prob,leave_prob)),
     marital_status == 'Widowed' ~ sample(possible_marital_status, size=nrow(.), replace = T,prob = c(leave_prob,leave_prob,leave_prob,stay_prob))
-  )) %>% 
-  add_count(m_marital_status) %>% 
-  add_count(marital_status) %>% 
-  View()
+  ))
 
 
 
 # Global recoding - Citizenship
 
-private_data %>% 
+private_data <- private_data %>% 
   group_by(citizenship) %>% 
-  left_join(country_region, by=c('citizenship' = 'Country')) %>%
-  group_by(m_region) %>% 
-  summarise(n=n()) %>% 
-  View()
+  left_join(country_region, by=c('citizenship' = 'Country')) %>% 
+  ungroup()
 
 
 
 # PRAM - evote
 
-possible_evote <- c(0,1)
+possible_evote <- c(0, 1)
 
-stay_prob <- 1-sum(private_data$evote)/nrow(private_data)
-leave_prob <- sum(private_data$evote)/nrow(private_data)
+stay_prob <- 0.9
+leave_prob <- 0.1
 
-private_data %>% 
+private_data <- private_data %>% 
   mutate(m_evote = case_when(
     evote == 0 ~ sample(possible_evote, size=nrow(.), replace=T, prob=c(stay_prob, leave_prob)),
     evote == 1 ~ sample(possible_evote, size=nrow(.), replace=T, prob=c(leave_prob,stay_prob))
-  )) %>%
-  count(evote,m_evote) %>% 
-  View()
+  ))
 
 
 # PRAM - party
@@ -93,14 +84,31 @@ possible_party <- c('Green','Red', 'Invalid vote')
 stay_prob <- 0.9
 leave_prob <- 0.05
 
-private_data %>% 
+private_data <- private_data %>% 
   mutate(m_party = case_when(
     party == 'Green' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(stay_prob, leave_prob, leave_prob)),
     party == 'Red' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(leave_prob,stay_prob, leave_prob)),
     party == 'Invalid vote' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(leave_prob, leave_prob,stay_prob))
-  )) %>%
-  count(m_party) %>% 
-  View()
+  )) 
+
+
+# PRAM - Sex
+
+possible_sex <- c("Male", "Female")
+
+stay_prob <- 0.9
+leave_prob <- 0.1
+
+private_data <- private_data %>% 
+  mutate(m_sex = case_when(
+    sex == "Male" ~ sample(possible_sex, size=nrow(.), replace=T, prob=c(stay_prob, leave_prob)),
+    sex == "Female" ~ sample(possible_sex, size=nrow(.), replace=T, prob=c(leave_prob,stay_prob))
+  ))
+
+
+private_data %>% 
+  select()
+
 
 
 
