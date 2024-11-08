@@ -20,6 +20,22 @@ country_mappings <- read.csv("src/country_mappings.csv", sep = ";")
 public_data <- public_data %>%
     left_join(country_mappings, by = c("citizenship" = "Country"))
 
-public_data %>%
-    View()
+public_data <- public_data %>%
+    mutate(m_region = case_when(m_region == "Non-EU" ~ "Other", 
+                            m_region == "EU" ~ "Other", 
+                            m_region == "Denmark" ~ "Denmark"))
 
+
+# computing population frequencies
+quasi_idfs <- c("sex", "last_voted", "m_dob", "zip", "m_region", "marital_status")
+public_data <- public_data %>%
+    group_by(across(all_of(quasi_idfs))) %>%
+        mutate(F_k = n()) %>%
+        ungroup()
+
+
+# creating the final grouped version of the public data
+public_data %>% 
+  select(sex, last_voted, m_dob, zip, m_region, marital_status, F_k) %>% 
+
+  write.xlsx("./data/modified/grouped_population_data.xlsx")
