@@ -2,8 +2,15 @@ library(readxl)
 library(tidyverse)
 library(dplyr)
 
+# loading the anonymized dataset as a data frame
 df <- openxlsx::read.xlsx("data/anonymized/anonymized_data.xlsx")
-print(df)
+print(colnames(df))
+
+# loading the grouped population data as a data frame
+pop_df <- openxlsx::read.xlsx("data/modified/grouped_population_data.xlsx")
+print(colnames(pop_df))
+
+# defining the quasi-identifiers and the sensitive column
 quasi_idfs <- c("m_sex", "m_evote", "m_dob", "zip", "education", "m_citizenship_region", "m_marital_status")
 sensitive_col <- c("m_party")
 
@@ -46,7 +53,14 @@ get_reid_risk <- function(df, pop_df, quasi_idfs) {
     return(avg_reid_risk)
 }
 
+# computing and printing the k-anonymity of the anonymized dataset
 k_anm <- get_k_anonymity(df, quasi_idfs)
 print(paste0("The k-anonymity of the data frame is ", k_anm))
+
+# computing and printing the l-diversity of the anonymized dataset
 l_div <- get_l_diversity(df, quasi_idfs, sensitive_col)
 print(paste0("The l-diversity of the data frame is ", l_div))
+
+# computing and printing the average reidentification risk of the anonymized dataset
+avg_reid_risk <- get_reid_risk(df, pop_df, quasi_idfs)
+print(paste0("The average reidentification risk is", avg_reid_risk))
