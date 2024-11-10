@@ -26,6 +26,12 @@ public_data <- public_data %>%
                             m_region == "Denmark" ~ "Denmark"))
 
 
+# zip null for other citizenship
+public_data <- public_data %>%
+    mutate(zip = case_when(m_region == "Other" ~ NA_character_, 
+                            TRUE ~ zip))
+
+
 # computing population frequencies
 quasi_idfs <- c("sex", "last_voted", "m_dob", "zip", "m_region", "marital_status")
 public_data <- public_data %>%
@@ -35,7 +41,13 @@ public_data <- public_data %>%
 
 
 # creating the final grouped version of the public data
-public_data %>% 
-  select(sex, last_voted, m_dob, zip, m_region, marital_status, F_k) %>% 
-
+public_data %>%
+  select(sex, last_voted, m_dob, zip, m_region, marital_status, F_k) %>%
+  rename(
+    m_sex = sex,
+    m_evote = last_voted,
+    m_zip = zip,
+    m_citizenship_region = m_region,
+    m_marital_status = marital_status
+  ) %>%
   write.xlsx("./data/modified/grouped_population_data.xlsx")
