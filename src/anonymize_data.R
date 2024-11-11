@@ -70,12 +70,13 @@ private_data <- private_data %>%
 # PRAM - party
 possible_party <- c('Green','Red', 'Invalid vote')
 stay_prob <- 0.7
-leave_prob <- 0.15
+leave_prob <- 0.3
+leave_iv_prob <- 0
 
 private_data <- private_data %>% 
   mutate(m_party = case_when(
-    party == 'Green' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(stay_prob, leave_prob, leave_prob)),
-    party == 'Red' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(leave_prob,stay_prob, leave_prob)),
+    party == 'Green' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(stay_prob, leave_prob, leave_iv_prob)),
+    party == 'Red' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(leave_prob,stay_prob, leave_iv_prob)),
     party == 'Invalid vote' ~ sample(possible_party, size=nrow(.), replace=T, prob=c(leave_prob, leave_prob,stay_prob))
   )) 
 
@@ -106,4 +107,9 @@ private_data %>%
   select(m_sex, m_evote, m_dob, m_zip, education, m_citizenship_region = m_region, m_marital_status, m_party) %>% 
   write.xlsx("./data/anonymized/anonymized_data.xlsx")
 
-
+  
+  
+  
+  
+  
+  
