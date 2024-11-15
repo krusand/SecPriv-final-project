@@ -2,62 +2,56 @@
 setwd("/Users/krusand/Documents/GitHub/SecPriv-final-project/")
 library(tidyverse)
 library(openxlsx)
-library(rworldmap)
-library(sdcMicro)
 
+dt_survey <- as.Date("2024-07-07")
 
-anonymized_data <- read.xlsx("data/anonymized/anonymized_data.xlsx")
-private_data <- read.xlsx("data/raw/private_dataU.xlsx") %>% 
-  mutate(dob = as.Date(dob, origin = '1899-12-30'))
+survey_list <- read.csv("data/leaked/survey_listC.txt", sep = ".")
+anonymized_data <- read.csv("data/anonymized/anonymised_dataC.csv") %>% 
+  select(-education) %>% 
+  mutate(zip = as.character(zip))
 
-raw_public_data <- read.xlsx("data/raw/public_data_registerU.xlsx") %>% 
+public_data_results <- read.xlsx("data/leaked/public_data_resultsC.xlsx")
+
+public_data_register_raw <- read.xlsx("data/leaked/public_data_registerC.xlsx") %>% 
   mutate(dob = as.Date(dob, origin = '1899-12-30')) %>% 
   mutate(evote = last_voted) %>% 
-  filter(name %in% private_data$name)
+  filter(name %in% survey_list$name) %>% 
+  select(-last_voted)
 
+pub_eu_country <- c("Belgium", "France", "Germany", "Hungary", "Iceland","Italy","Portugal","Slovakia","Spain", "Sweden")
+pub_non_eu_country <- c("Afghanistan","China","Serbia", "Syria", "Thailand", "Turkey", "United Kingdom")
+age_labs = c("18-24", "25-29","30-39","40-49","50-59", '60-69', "70+")
 
-dob_labs = c("<=1940s","1950s","1960s","1970s","1980s","1990s",">=2000s")
-
-public_data <- raw_public_data %>% 
-  mutate(m_region = case_when(
-    citizenship == 'Denmark' ~ 'Denmark',
-    T ~ 'Other'
+public_data_register <- public_data_register_raw %>% 
+  mutate(age = year(as.period(interval(start=dob, end=dt_survey)))) %>% 
+  mutate(age = cut(age, breaks = c(18, 24, 29, 39, 49, 59, 69, Inf), labels=age_labs)) %>% 
+  mutate(marital_status = case_when(
+    marital_status == 'Married' ~ 'Yes',
+    T ~ 'No'
   )) %>% 
-  mutate(year=year(dob)) %>% 
-  mutate(m_dob = cut(year, breaks = c(0, 1949, 1959, 1969, 1979, 1989, 1999, Inf), labels=dob_labs)) %>% 
-  select(name,m_dob, zip, m_region, marital_status, evote,sex)
-
-
-
-anonymized_data %>% 
-  select(m_dob,m_zip,m_citizenship_region, m_marital_status, m_evote, m_sex) %>% 
-  inner_join(public_data, by = c('m_dob' = 'm_dob',
-                                'm_zip' = 'zip',
-                                'm_citizenship_region' = 'm_region',
-                                'm_marital_status' = 'marital_status',
-                                'm_evote' = 'evote',
-                                'm_sex' = 'sex')) %>% 
-  group_by(m_dob, m_zip, m_citizenship_region, m_marital_status,m_evote,m_sex) %>% 
-  mutate(n=n()) %>% 
-  View()
-
-
-
-
+  mutate(citizenship = case_when(
+    citizenship %in% pub_eu_country ~ "EU",
+    citizenship %in% pub_non_eu_country ~ "Non-EU",
+    citizenship == 'Denmark' ~ 'Denmark'
+  )) %>% 
+  select(name, sex,evote,age,zip,citizenship, marital_status)
 
 
 
 
 anonymized_data %>% 
-  select(m_dob,m_zip,m_citizenship_region) %>% 
-  left_join(public_data %>% 
-               select(m_dob, zip, m_region, name), 
-            by = c('m_dob' = 'm_dob',
-                   'm_zip' = 'zip',
-                   'm_citizenship_region' = 'm_region'), na_matches="na") %>% 
-  group_by(m_dob, m_zip, m_citizenship_region) %>% 
-  mutate(n=n()) %>% 
+  left_join(public_data_register, 
+            by = c("sex","evote","age","zip","citizenship", "marital_status")) %>% 
+  filter(is.na(name)) %>% 
   View()
+
+
+
+public_data_register_raw %>% 
+  count(marital_status)
+
+
+
 
 
 
