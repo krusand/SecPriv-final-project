@@ -64,7 +64,7 @@ df_na_zip <- anonymized_data %>%
 
 
 # Bind and filter ----
-bind_rows(list(df_all, df_na_age, df_na_zip)) %>%
+bind_rows(list(df_all, df_na_age, df_na_zip)) %>% 
   group_by(sex, evote, age, zip, citizenship, marital_status) %>% 
   mutate(n=n()) %>% 
   mutate(n_dist = n_distinct(party)) %>% 
